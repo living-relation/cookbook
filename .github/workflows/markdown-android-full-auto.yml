@@ -24,15 +24,15 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Accept SDK licenses and install packages
-        run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
 
       - name: Assemble debug APK
         working-directory: apps/markdown-notes-android
         run: |
-          echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+          echo "sdk.dir=${ANDROID_SDK_ROOT}" >> local.properties
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
