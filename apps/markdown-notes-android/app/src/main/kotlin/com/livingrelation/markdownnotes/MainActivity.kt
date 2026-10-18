@@ -49,7 +49,7 @@ import com.livingrelation.markdownnotes.core.files.RecentNote
 import com.livingrelation.markdownnotes.core.files.SafIntents
 import com.livingrelation.markdownnotes.feature.editor.EditorScreen
 import com.livingrelation.markdownnotes.feature.reader.ReadScreen
-import com.livingrelation.markdownnotes.feature.table.TableEditorPlaceholder
+import com.livingrelation.markdownnotes.feature.table.TableEditorScreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -176,7 +176,10 @@ private fun MarkdownNotesApp() {
                 )
             }
             composable(MainDestination.Table.route) {
-                TableEditorPlaceholder()
+                TableEditorScreen(
+                    document = document,
+                    onDocumentChange = viewModel::applyDocument,
+                )
             }
         }
     }

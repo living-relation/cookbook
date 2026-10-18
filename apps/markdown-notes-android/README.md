@@ -11,7 +11,7 @@ Multi-module Kotlin / Jetpack Compose app for reading and editing Markdown notes
 | `:core-files` | SAF open/save, recents, autosave (placeholder) |
 | `:feature-reader` | Read-only Compose UI |
 | `:feature-editor` | Block editor with toolbar, read/preview toggle, dirty → autosave |
-| `:feature-table` | Table grid editor (placeholder) |
+| `:feature-table` | Table grid editor (GFM `Block.Table`) |
 
 ## Prerequisites
 
@@ -51,4 +51,4 @@ Markdown fixtures for tests and manual QA live under `fixtures/notes/`:
 
 1. Install the debug APK on a device or emulator (API 26+).
 2. Launch **Markdown Notes** — the **Read** tab shows parsed demo content.
-3. Switch to **Edit** and **Table** tabs; placeholders confirm module wiring until later pipeline tasks ship real UI.
+3. Switch to **Edit** and **Table** tabs; edit blocks and table cells (changes mark the note dirty and autosave when backgrounded).

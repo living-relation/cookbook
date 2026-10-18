@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,9 +36,9 @@ class MarkdownNotesUiTest {
         composeRule.onNodeWithTag("editor-mode-edit").assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-table").performClick()
-        composeRule
-            .onNodeWithText("Table grid editor ships in automated pipeline.")
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag("table-screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("table-cell-0-0").assertIsDisplayed()
+        composeRule.onNodeWithText("Feature").assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-read").performClick()
         composeRule.onNodeWithText("Welcome").assertIsDisplayed()
@@ -47,6 +48,15 @@ class MarkdownNotesUiTest {
     fun editTab_changingParagraphMarksDocumentDirtyInTitle() {
         composeRule.onNodeWithTag("nav-edit").performClick()
         composeRule.onNodeWithTag("toolbar-add-paragraph").performClick()
+        composeRule.onNodeWithText("Markdown Notes *").assertIsDisplayed()
+    }
+
+    @Test
+    fun tableTab_editingCellMarksDocumentDirtyInTitle() {
+        composeRule.onNodeWithTag("nav-table").performClick()
+        composeRule
+            .onNodeWithTag("table-cell-0-0")
+            .performTextReplacement("Feature updated")
         composeRule.onNodeWithText("Markdown Notes *").assertIsDisplayed()
     }
 
