@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -68,6 +69,7 @@ private fun MarkdownNotesApp(document: Document) {
             NavigationBar {
                 destinations.forEachIndexed { index, destination ->
                     NavigationBarItem(
+                        modifier = Modifier.testTag("nav-${destination.route}"),
                         selected = selectedIndex == index,
                         onClick = {
                             selectedIndex = index

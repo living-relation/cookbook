@@ -16,6 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.livingrelation.markdownnotes.core.markdown.Block
 import com.livingrelation.markdownnotes.core.markdown.Document
@@ -41,6 +44,8 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
         modifier =
             modifier
                 .fillMaxSize()
+                .testTag("read-screen")
+                .semantics { contentDescription = "zoom ${"%.1f".format(scale)}" }
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
