@@ -1,12 +1,15 @@
 package com.livingrelation.markdownnotes.feature.reader
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +22,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.livingrelation.markdownnotes.core.markdown.Block
 import com.livingrelation.markdownnotes.core.markdown.Document
@@ -57,39 +62,57 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
                 .padding(20.dp),
     ) {
         for (block in document.blocks) {
-            when (block) {
-                is Block.Heading ->
+            BlockView(block = block)
+        }
+    }
+}
+
+@Composable
+private fun BlockView(block: Block, modifier: Modifier = Modifier) {
+    when (block) {
+        is Block.Heading ->
+            Text(
+                text = block.text,
+                style =
+                    when (block.level) {
+                        1 -> MaterialTheme.typography.headlineLarge
+                        2 -> MaterialTheme.typography.headlineMedium
+                        else -> MaterialTheme.typography.headlineSmall
+                    },
+                modifier = modifier.padding(vertical = 8.dp),
+            )
+        is Block.Paragraph ->
+            Text(
+                text = block.text,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = modifier.padding(vertical = 4.dp),
+            )
+        is Block.CodeFence ->
+            Text(
+                text = block.code,
+                style =
+                    MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = FontFamily.Monospace,
+                    ),
+                modifier =
+                    modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(12.dp),
+            )
+        Block.HorizontalRule ->
+            HorizontalDivider(modifier = modifier.padding(vertical = 12.dp))
+        is Block.Table -> {
+            Column(modifier = modifier.padding(vertical = 8.dp)) {
+                block.rows.forEachIndexed { index, row ->
+                    val isHeader = block.headerRow && index == 0
                     Text(
-                        text = block.text,
-                        style =
-                            when (block.level) {
-                                1 -> MaterialTheme.typography.headlineLarge
-                                2 -> MaterialTheme.typography.headlineMedium
-                                else -> MaterialTheme.typography.headlineSmall
-                            },
-                        modifier = Modifier.padding(vertical = 8.dp),
-                    )
-                is Block.Paragraph ->
-                    Text(
-                        text = block.text,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(vertical = 4.dp),
-                    )
-                is Block.CodeFence ->
-                    Text(
-                        text = block.code,
+                        text = row.joinToString("  ·  "),
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
+                        modifier = Modifier.padding(vertical = 2.dp),
                     )
-                Block.HorizontalRule ->
-                    Text("—", modifier = Modifier.padding(vertical = 12.dp))
-                is Block.Table -> {
-                    for (row in block.rows) {
-                        Text(
-                            text = row.joinToString("  ·  "),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
                 }
             }
         }
