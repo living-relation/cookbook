@@ -1,11 +1,14 @@
 package com.livingrelation.markdownnotes
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertContentDescriptionContains
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -23,7 +26,7 @@ class ReadScreenUiTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun pinchZoom_updatesScaleDescription() {
+    fun pinchZoom_andDoubleTapFitWidthReset() {
         val document =
             MarkdownEngine()
                 .parse(
@@ -52,6 +55,26 @@ class ReadScreenUiTest {
             )
         }
 
-        composeRule.onNodeWithTag("read-screen").assertContentDescriptionContains("zoom")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            val description = zoomDescription()
+            description.contains("zoom") && !description.contains("zoom 1.0")
+        }
+
+        composeRule.onNodeWithTag("read-screen").performTouchInput {
+            doubleClick(center)
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            zoomDescription().contains("zoom 1.0")
+        }
     }
+
+    private fun zoomDescription(): String =
+        composeRule
+            .onNodeWithTag("read-screen")
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsProperties.ContentDescription)
+            ?.firstOrNull()
+            .orEmpty()
 }

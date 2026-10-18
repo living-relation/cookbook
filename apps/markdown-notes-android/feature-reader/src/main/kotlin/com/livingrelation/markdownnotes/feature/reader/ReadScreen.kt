@@ -1,6 +1,7 @@
 package com.livingrelation.markdownnotes.feature.reader
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -28,15 +30,28 @@ import androidx.compose.ui.unit.dp
 import com.livingrelation.markdownnotes.core.markdown.Block
 import com.livingrelation.markdownnotes.core.markdown.Document
 
+private const val MIN_ZOOM_SCALE = 0.8f
+private const val MAX_ZOOM_SCALE = 3f
+private const val FIT_WIDTH_SCALE = 1f
+private const val ZOOMED_SCALE_EPSILON = 0.01f
+
 @Composable
 fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
-    var scale by remember { mutableFloatStateOf(1f) }
+    var scale by remember { mutableFloatStateOf(FIT_WIDTH_SCALE) }
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
+
+    fun resetToFitWidth() {
+        scale = FIT_WIDTH_SCALE
+        offsetX = 0f
+        offsetY = 0f
+    }
+
     val transformState =
         rememberTransformableState { zoomChange, panChange, _ ->
-            scale = (scale * zoomChange).coerceIn(0.8f, 3f)
-            if (scale > 1f) {
+            val newScale = (scale * zoomChange).coerceIn(MIN_ZOOM_SCALE, MAX_ZOOM_SCALE)
+            scale = newScale
+            if (newScale > FIT_WIDTH_SCALE + ZOOMED_SCALE_EPSILON) {
                 offsetX += panChange.x
                 offsetY += panChange.y
             } else {
@@ -44,6 +59,9 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
                 offsetY = 0f
             }
         }
+
+    val scrollState = rememberScrollState()
+    val isZoomedIn = scale > FIT_WIDTH_SCALE + ZOOMED_SCALE_EPSILON
 
     Column(
         modifier =
@@ -57,8 +75,16 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
                     translationX = offsetX
                     translationY = offsetY
                 }
-                .transformable(transformState)
-                .verticalScroll(rememberScrollState())
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = { resetToFitWidth() },
+                    )
+                }
+                .transformable(
+                    state = transformState,
+                    lockRotationOnZoomPan = true,
+                )
+                .verticalScroll(scrollState, enabled = !isZoomedIn)
                 .padding(20.dp),
     ) {
         for (block in document.blocks) {
