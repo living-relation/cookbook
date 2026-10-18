@@ -47,7 +47,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.livingrelation.markdownnotes.core.files.RecentNote
 import com.livingrelation.markdownnotes.core.files.SafIntents
-import com.livingrelation.markdownnotes.feature.editor.EditorPlaceholder
+import com.livingrelation.markdownnotes.feature.editor.EditorScreen
 import com.livingrelation.markdownnotes.feature.reader.ReadScreen
 import com.livingrelation.markdownnotes.feature.table.TableEditorPlaceholder
 import kotlinx.coroutines.launch
@@ -123,7 +123,8 @@ private fun MarkdownNotesApp() {
         topBar = {
             TopAppBar(
                 title = {
-                    Text(sessionState.displayName ?: "Markdown Notes")
+                    val title = sessionState.displayName ?: "Markdown Notes"
+                    Text(if (sessionState.isDirty) "$title *" else title)
                 },
                 actions = {
                     TextButton(onClick = { showRecents = true }) {
@@ -169,7 +170,10 @@ private fun MarkdownNotesApp() {
                 ReadScreen(document = document)
             }
             composable(MainDestination.Edit.route) {
-                EditorPlaceholder()
+                EditorScreen(
+                    document = document,
+                    onDocumentChange = viewModel::applyDocument,
+                )
             }
             composable(MainDestination.Table.route) {
                 TableEditorPlaceholder()

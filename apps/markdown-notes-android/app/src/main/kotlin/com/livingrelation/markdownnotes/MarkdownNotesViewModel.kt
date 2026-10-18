@@ -21,7 +21,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class MarkdownNotesViewModel(
+class MarkdownNotesViewModel
+@JvmOverloads
+constructor(
     application: Application,
     private val engine: MarkdownEngine = MarkdownEngine(),
     recentsRepository: RecentsRepository = DataStoreRecentsRepository.create(application),
@@ -96,6 +98,11 @@ class MarkdownNotesViewModel(
         viewModelScope.launch {
             noteSession.flushAutosave()
         }
+    }
+
+    fun applyDocument(document: Document) {
+        _markdown.value = engine.emit(document)
+        noteSession.markDirty()
     }
 
     private fun describeFileFailure(throwable: Throwable): String {

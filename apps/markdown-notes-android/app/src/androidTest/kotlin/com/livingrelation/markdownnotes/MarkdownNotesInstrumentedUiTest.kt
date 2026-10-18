@@ -16,9 +16,7 @@ class MarkdownNotesInstrumentedUiTest {
     fun launch_showsWelcomeAndCanOpenTabs() {
         composeRule.onNodeWithText("Welcome").assertIsDisplayed()
         composeRule.onNodeWithTag("nav-edit").performClick()
-        composeRule
-            .onNodeWithText("Edit mode — block editor ships in automated pipeline.")
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag("editor-screen").assertIsDisplayed()
         composeRule.onNodeWithTag("nav-read").performClick()
         composeRule.onNodeWithText("Welcome").assertIsDisplayed()
     }

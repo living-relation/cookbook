@@ -10,7 +10,7 @@ Multi-module Kotlin / Jetpack Compose app for reading and editing Markdown notes
 | `:core-markdown` | Parse / emit block AST (CommonMark + GFM tables) |
 | `:core-files` | SAF open/save, recents, autosave (placeholder) |
 | `:feature-reader` | Read-only Compose UI |
-| `:feature-editor` | Block editor (placeholder) |
+| `:feature-editor` | Block editor with toolbar, read/preview toggle, dirty → autosave |
 | `:feature-table` | Table grid editor (placeholder) |
 
 ## Prerequisites

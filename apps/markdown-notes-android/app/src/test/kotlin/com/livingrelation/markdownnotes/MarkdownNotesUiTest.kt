@@ -31,9 +31,8 @@ class MarkdownNotesUiTest {
     @Test
     fun bottomNav_switchesEditAndTableThenBackToRead() {
         composeRule.onNodeWithTag("nav-edit").performClick()
-        composeRule
-            .onNodeWithText("Edit mode — block editor ships in automated pipeline.")
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag("editor-screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("editor-mode-edit").assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-table").performClick()
         composeRule
@@ -41,6 +40,21 @@ class MarkdownNotesUiTest {
             .assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-read").performClick()
+        composeRule.onNodeWithText("Welcome").assertIsDisplayed()
+    }
+
+    @Test
+    fun editTab_changingParagraphMarksDocumentDirtyInTitle() {
+        composeRule.onNodeWithTag("nav-edit").performClick()
+        composeRule.onNodeWithTag("toolbar-add-paragraph").performClick()
+        composeRule.onNodeWithText("Markdown Notes *").assertIsDisplayed()
+    }
+
+    @Test
+    fun editTab_previewToggleShowsRenderedBlocks() {
+        composeRule.onNodeWithTag("nav-edit").performClick()
+        composeRule.onNodeWithTag("editor-mode-preview").performClick()
+        composeRule.onNodeWithTag("editor-preview").assertIsDisplayed()
         composeRule.onNodeWithText("Welcome").assertIsDisplayed()
     }
 }
