@@ -1,0 +1,50 @@
+name: Markdown Android — full auto build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "Living-relation/markdown-android-full-auto-ee3c"
+    paths:
+      - "apps/markdown-notes-android/**"
+      - ".github/workflows/markdown-android-full-auto.yml"
+
+concurrency:
+  group: markdown-android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-ci:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK packages
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -name sdkmanager -type f | head -1)"
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Assemble debug APK
+        working-directory: apps/markdown-notes-android
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: markdown-notes-debug-apk
+          path: apps/markdown-notes-android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

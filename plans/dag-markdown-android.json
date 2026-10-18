@@ -1,0 +1,82 @@
+{
+  "title": "Markdown Reader/Editor Android App",
+  "models": {
+    "HIGH": "composer-2.5",
+    "MED": "composer-2.5",
+    "LOW": "composer-2.5"
+  },
+  "tasks": [
+    {
+      "id": "scaffold-project",
+      "depends_on": [],
+      "complexity": "HIGH",
+      "subtask_prompt": "Extend apps/markdown-notes-android (do not recreate from scratch). Finish any missing module wiring, manifests, and README. Add fixtures/notes/ samples if missing. Ensure ./gradlew :app:assembleDebug works."
+    },
+    {
+      "id": "research-markdown-model",
+      "depends_on": ["scaffold-project"],
+      "complexity": "LOW",
+      "subtask_prompt": "Write docs/research-markdown-model.md: block AST for GFM, round-trip rules, table edge cases. No UI code."
+    },
+    {
+      "id": "research-android-files",
+      "depends_on": ["scaffold-project"],
+      "complexity": "LOW",
+      "subtask_prompt": "Write docs/research-android-files.md: SAF open/save, recents, autosave. No UI code."
+    },
+    {
+      "id": "implementation-plan",
+      "depends_on": ["research-markdown-model", "research-android-files"],
+      "complexity": "MED",
+      "subtask_prompt": "Write docs/IMPLEMENTATION.md merging upstream docs: modules, APIs, navigation, test strategy using fixtures/notes."
+    },
+    {
+      "id": "core-markdown",
+      "depends_on": ["implementation-plan"],
+      "complexity": "HIGH",
+      "subtask_prompt": "Implement core-markdown parse/emit with JVM tests for all fixtures/notes. Run ./gradlew :core-markdown:test; report results."
+    },
+    {
+      "id": "core-files",
+      "depends_on": ["implementation-plan", "core-markdown"],
+      "complexity": "MED",
+      "subtask_prompt": "Implement core-files: open/save via SAF, recents, debounced autosave. No Compose UI."
+    },
+    {
+      "id": "feature-reader",
+      "depends_on": ["core-markdown", "core-files"],
+      "complexity": "MED",
+      "subtask_prompt": "feature-reader: ReadScreen from AST, wire app navigation and file load."
+    },
+    {
+      "id": "reader-zoom-pan",
+      "depends_on": ["feature-reader"],
+      "complexity": "MED",
+      "subtask_prompt": "Pinch zoom, pan when zoomed, double-tap and fit-width reset on reader only."
+    },
+    {
+      "id": "feature-editor",
+      "depends_on": ["reader-zoom-pan"],
+      "complexity": "HIGH",
+      "subtask_prompt": "feature-editor: block editing, toolbar, read/edit toggle, dirty state and autosave."
+    },
+    {
+      "id": "feature-table",
+      "depends_on": ["feature-editor"],
+      "complexity": "HIGH",
+      "subtask_prompt": "feature-table: grid editor for tables, wired to AST and tests as needed."
+    },
+    {
+      "id": "reader-toc",
+      "depends_on": ["feature-table"],
+      "complexity": "LOW",
+      "subtask_prompt": "TOC drawer from headings with scroll-to-section."
+    },
+    {
+      "id": "readme",
+      "depends_on": ["feature-table"],
+      "complexity": "LOW",
+      "subtask_prompt": "Complete README with setup and manual QA checklist."
+    }
+  ]
+}
