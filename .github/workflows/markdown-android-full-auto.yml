@@ -1,0 +1,77 @@
+name: Markdown Android — full auto build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "Living-relation/markdown-android-full-auto-ee3c"
+    paths:
+      - "plans/dag-markdown-android.json"
+      - "scripts/markdown-android-full-auto/**"
+      - ".github/workflows/markdown-android-full-auto.yml"
+
+concurrency:
+  group: markdown-android-full-auto
+  cancel-in-progress: false
+
+jobs:
+  orchestrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: scripts/markdown-android-full-auto/pnpm-lock.yaml
+
+      - name: Install orchestrator
+        working-directory: scripts/markdown-android-full-auto
+        run: |
+          pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+
+      - name: Run cloud agent pipeline
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TARGET_BRANCH: ${{ github.ref_name }}
+          WORKSPACE_ROOT: ${{ github.workspace }}
+        working-directory: scripts/markdown-android-full-auto
+        run: pnpm orchestrate
+
+  android-ci:
+    needs: orchestrate
+    if: always() && needs.orchestrate.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Assemble debug APK
+        working-directory: apps/markdown-notes-android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: markdown-notes-debug-apk
+          path: apps/markdown-notes-android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn

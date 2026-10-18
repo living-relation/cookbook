@@ -1,0 +1,17 @@
+{
+  "name": "markdown-android-full-auto",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "orchestrate": "tsx orchestrate.mts",
+    "orchestrate:dry": "tsx orchestrate.mts --dry-run"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
