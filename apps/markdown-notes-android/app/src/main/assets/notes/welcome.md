@@ -1,6 +1,8 @@
 # Welcome
 
-This app was built by an automated pipeline.
+Tap **Open file** at the top, then search for a `.md` file on your phone.
+
+This sample stays here until you open a real file.
 
 | Feature | Status |
 | --- | --- |

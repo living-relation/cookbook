@@ -1,22 +1,31 @@
 package com.livingrelation.markdownnotes
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -24,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -56,24 +66,28 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
-                Surface {
-                    MarkdownNotesApp()
+            MaterialTheme(colorScheme = lightColorScheme()) {
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    MarkdownViewerApp(initialUri = intent.data)
                 }
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
 }
 
 private enum class MainDestination(val route: String, val label: String) {
-    Read("read", "Read"),
+    Read("read", "View"),
     Edit("edit", "Edit"),
-    Table("table", "Table"),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MarkdownNotesApp() {
+private fun MarkdownViewerApp(initialUri: Uri?) {
     val viewModel: MarkdownNotesViewModel = viewModel()
     val document by viewModel.document.collectAsStateWithLifecycle()
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
@@ -91,6 +105,7 @@ private fun MarkdownNotesApp() {
 
     val snackbarHostState = remember { SnackbarHostState() }
     var showRecents by remember { mutableStateOf(false) }
+    var showTableEditor by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
@@ -100,6 +115,14 @@ private fun MarkdownNotesApp() {
                 result.data?.data?.let(viewModel::openDocument)
             }
         }
+
+    fun openFilePicker() {
+        openLauncher.launch(SafIntents.openDocumentIntent())
+    }
+
+    LaunchedEffect(initialUri) {
+        initialUri?.let(viewModel::openDocument)
+    }
 
     LaunchedEffect(fileMessage) {
         val message = fileMessage ?: return@LaunchedEffect
@@ -119,21 +142,35 @@ private fun MarkdownNotesApp() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    if (showTableEditor) {
+        BackHandler { showTableEditor = false }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    val title = sessionState.displayName ?: "Markdown Notes"
+                    val title = sessionState.displayName ?: "Markdown"
                     Text(if (sessionState.isDirty) "$title *" else title)
                 },
                 actions = {
-                    TextButton(onClick = { showRecents = true }) {
-                        Text("Recents")
+                    TextButton(
+                        onClick = { showTableEditor = true },
+                        modifier = Modifier.testTag("nav-table"),
+                    ) {
+                        Text("Tables")
                     }
                     TextButton(
-                        onClick = { openLauncher.launch(SafIntents.openDocumentIntent()) },
+                        onClick = { showRecents = true },
+                        modifier = Modifier.testTag("open-recents"),
                     ) {
-                        Text("Open")
+                        Text("Recents")
+                    }
+                    Button(
+                        onClick = { openFilePicker() },
+                        modifier = Modifier.testTag("open-file"),
+                    ) {
+                        Text("Open file")
                     }
                 },
             )
@@ -144,8 +181,9 @@ private fun MarkdownNotesApp() {
                 destinations.forEachIndexed { index, destination ->
                     NavigationBarItem(
                         modifier = Modifier.testTag("nav-${destination.route}"),
-                        selected = selectedIndex == index,
+                        selected = selectedIndex == index && !showTableEditor,
                         onClick = {
+                            showTableEditor = false
                             navController.navigate(destination.route) {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
@@ -161,25 +199,38 @@ private fun MarkdownNotesApp() {
             }
         },
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = MainDestination.Read.route,
-            modifier = Modifier.padding(innerPadding),
-        ) {
-            composable(MainDestination.Read.route) {
-                ReadScreen(document = document)
-            }
-            composable(MainDestination.Edit.route) {
-                EditorScreen(
-                    document = document,
-                    onDocumentChange = viewModel::applyDocument,
-                )
-            }
-            composable(MainDestination.Table.route) {
-                TableEditorScreen(
-                    document = document,
-                    onDocumentChange = viewModel::applyDocument,
-                )
+        if (showTableEditor) {
+            TableEditorScreen(
+                document = document,
+                onDocumentChange = viewModel::applyDocument,
+                modifier = Modifier.padding(innerPadding),
+            )
+        } else {
+            NavHost(
+                navController = navController,
+                startDestination = MainDestination.Read.route,
+                modifier = Modifier.padding(innerPadding),
+            ) {
+                composable(MainDestination.Read.route) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        if (sessionState.uri == null) {
+                            OpenFileHero(
+                                onOpenFile = { openFilePicker() },
+                                onRecents = { showRecents = true },
+                            )
+                        }
+                        ReadScreen(
+                            document = document,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                composable(MainDestination.Edit.route) {
+                    EditorScreen(
+                        document = document,
+                        onDocumentChange = viewModel::applyDocument,
+                    )
+                }
             }
         }
     }
@@ -198,7 +249,50 @@ private fun MarkdownNotesApp() {
                         showRecents = false
                     }
                 },
+                onOpenFile = {
+                    scope.launch {
+                        sheetState.hide()
+                        showRecents = false
+                        openFilePicker()
+                    }
+                },
             )
+        }
+    }
+}
+
+@Composable
+private fun OpenFileHero(
+    onOpenFile: () -> Unit,
+    onRecents: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .testTag("open-file-hero"),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "Open a markdown file",
+            style = MaterialTheme.typography.titleLarge,
+        )
+        Text(
+            text = "Tap Open file, then use your phone’s search to find a .md file.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Button(
+            onClick = onOpenFile,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag("open-file-hero-button"),
+        ) {
+            Text("Open file")
+        }
+        TextButton(onClick = onRecents, modifier = Modifier.fillMaxWidth()) {
+            Text("Recent files")
         }
     }
 }
@@ -207,22 +301,55 @@ private fun MarkdownNotesApp() {
 private fun RecentsSheet(
     recents: List<RecentNote>,
     onRecentSelected: (RecentNote) -> Unit,
+    onOpenFile: () -> Unit,
 ) {
+    var query by remember { mutableStateOf("") }
+    val filtered =
+        remember(recents, query) {
+            val needle = query.trim()
+            if (needle.isEmpty()) {
+                recents
+            } else {
+                recents.filter { it.displayName.contains(needle, ignoreCase = true) }
+            }
+        }
     Column(modifier = Modifier.padding(bottom = 32.dp)) {
         Text(
-            text = "Recent notes",
+            text = "Find a markdown file",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
-        if (recents.isEmpty()) {
+        Button(
+            onClick = onOpenFile,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .testTag("recents-open-file"),
+        ) {
+            Text("Search files on this phone")
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .testTag("recents-search"),
+            label = { Text("Filter recents") },
+            singleLine = true,
+        )
+        if (filtered.isEmpty()) {
             Text(
-                text = "No recent files yet. Use Open to pick a Markdown note.",
+                text = "No matches yet. Use Search files on this phone.",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
             )
         } else {
             LazyColumn {
-                items(recents, key = { it.uriString }) { note ->
+                items(filtered, key = { it.uriString }) { note ->
                     Text(
                         text = note.displayName,
                         style = MaterialTheme.typography.bodyLarge,

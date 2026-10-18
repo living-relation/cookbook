@@ -19,10 +19,17 @@ class MarkdownNotesUiTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
+    fun launch_showsOpenFileControls() {
+        composeRule.onNodeWithTag("open-file").assertIsDisplayed()
+        composeRule.onNodeWithTag("open-recents").assertIsDisplayed()
+        composeRule.onNodeWithTag("open-file-hero").assertIsDisplayed()
+    }
+
+    @Test
     fun readTab_showsWelcomeHeadingAndTable() {
         composeRule.onNodeWithText("Welcome").assertIsDisplayed()
         composeRule
-            .onNodeWithText("This app was built by an automated pipeline.")
+            .onNodeWithText("Tap Open file at the top, then search for a .md file on your phone.")
             .assertIsDisplayed()
         composeRule.onNodeWithText("Feature  ·  Status").assertIsDisplayed()
         composeRule.onNodeWithText("Read  ·  Ready").assertIsDisplayed()
@@ -48,7 +55,7 @@ class MarkdownNotesUiTest {
     fun editTab_changingParagraphMarksDocumentDirtyInTitle() {
         composeRule.onNodeWithTag("nav-edit").performClick()
         composeRule.onNodeWithTag("toolbar-add-paragraph").performClick()
-        composeRule.onNodeWithText("Markdown Notes *").assertIsDisplayed()
+        composeRule.onNodeWithText("Markdown *").assertIsDisplayed()
     }
 
     @Test
@@ -57,7 +64,7 @@ class MarkdownNotesUiTest {
         composeRule
             .onNodeWithTag("table-cell-0-0")
             .performTextReplacement("Feature updated")
-        composeRule.onNodeWithText("Markdown Notes *").assertIsDisplayed()
+        composeRule.onNodeWithText("Markdown *").assertIsDisplayed()
     }
 
     @Test

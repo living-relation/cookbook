@@ -9,8 +9,9 @@ object SafIntents {
     fun openDocumentIntent(): Intent =
         Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "text/*"
-            putExtra(Intent.EXTRA_MIME_TYPES, markdownMimeTypes)
+            // */* so the system picker search can find .md files that are not tagged as markdown.
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, markdownMimeTypes + arrayOf("text/*", "*/*"))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
