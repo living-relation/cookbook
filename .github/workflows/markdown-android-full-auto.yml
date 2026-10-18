@@ -48,8 +48,6 @@ jobs:
         run: pnpm orchestrate
 
   android-ci:
-    needs: orchestrate
-    if: always() && needs.orchestrate.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,8 +59,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Install Android SDK packages
+        uses: nttld/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
 
       - name: Assemble debug APK
         working-directory: apps/markdown-notes-android

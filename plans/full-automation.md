@@ -6,11 +6,14 @@
 2. **Orchestrate** job runs every bot task in order against this repo (cloud agents commit to the same branch).
 3. **Android CI** job builds a debug APK and uploads it as a workflow artifact.
 
-## One-time repo setup (admin only, not you day-to-day)
+## Secrets (two places, same key value)
 
-- GitHub secret `CURSOR_API_KEY` on `living-relation/cookbook`.
+| Where | Why |
+| --- | --- |
+| Cloud Agent environment | Bots run from an agent VM (orchestrator on the branch). |
+| GitHub Actions repo secret `CURSOR_API_KEY` | Same key, so the **orchestrate** job on GitHub can run without a VM. |
 
-After that, automation owns scaffold → brain → reader → zoom → editor → tables → polish.
+After both are set, automation owns scaffold → brain → reader → zoom → editor → tables → polish.
 
 ## Where things live
 
