@@ -1,5 +1,10 @@
 package com.livingrelation.markdownnotes.core.markdown
 
+import org.commonmark.ext.gfm.tables.TableBlock
+import org.commonmark.ext.gfm.tables.TableBody
+import org.commonmark.ext.gfm.tables.TableCell
+import org.commonmark.ext.gfm.tables.TableHead
+import org.commonmark.ext.gfm.tables.TableRow
 import org.commonmark.ext.gfm.tables.TablesExtension
 import org.commonmark.node.FencedCodeBlock
 import org.commonmark.node.Heading
@@ -8,12 +13,9 @@ import org.commonmark.node.Paragraph
 import org.commonmark.node.Text
 import org.commonmark.node.ThematicBreak
 import org.commonmark.parser.Parser
-import org.commonmark.renderer.markdown.MarkdownRenderer
-
 class MarkdownEngine {
     private val parser: Parser =
         Parser.builder().extensions(listOf(TablesExtension.create())).build()
-    private val renderer = MarkdownRenderer.builder().build()
 
     fun parse(markdown: String): Document {
         val root = parser.parse(markdown.trim())
@@ -26,24 +28,27 @@ class MarkdownEngine {
                 is Paragraph ->
                     blocks.add(Block.Paragraph(inlineText(node)))
                 is FencedCodeBlock ->
-                    blocks.add(Block.CodeFence(node.info, node.literal.orEmpty()))
+                    blocks.add(
+                        Block.CodeFence(
+                            language = node.info.takeIf { it.isNotBlank() },
+                            code = node.literal.orEmpty().trimEnd(),
+                        ),
+                    )
                 is ThematicBreak -> blocks.add(Block.HorizontalRule)
-                is org.commonmark.ext.gfm.tables.TableBlock -> {
+                is TableBlock -> {
                     val rows = mutableListOf<List<String>>()
-                    var rowNode: Node? = node.firstChild
-                    while (rowNode != null) {
-                        if (rowNode is org.commonmark.ext.gfm.tables.TableRow) {
-                            val cells = mutableListOf<String>()
-                            var cellNode: Node? = rowNode.firstChild
-                            while (cellNode != null) {
-                                if (cellNode is org.commonmark.ext.gfm.tables.TableCell) {
-                                    cells.add(inlineText(cellNode))
+                    var section: Node? = node.firstChild
+                    while (section != null) {
+                        if (section is TableHead || section is TableBody) {
+                            var rowNode: Node? = section.firstChild
+                            while (rowNode != null) {
+                                if (rowNode is TableRow) {
+                                    rows.add(tableRowCells(rowNode))
                                 }
-                                cellNode = cellNode.next
+                                rowNode = rowNode.next
                             }
-                            rows.add(cells)
                         }
-                        rowNode = rowNode.next
+                        section = section.next
                     }
                     blocks.add(Block.Table(headerRow = true, rows = rows))
                 }
@@ -85,10 +90,10 @@ class MarkdownEngine {
                     fun pad(row: List<String>): List<String> =
                         row + List(columnCount - row.size) { "" }
                     val rows = block.rows.map(::pad)
-                    sb.appendLine("| " + rows.first().joinToString(" | ") + " |")
+                    sb.appendLine("| " + rows.first().joinToString(" | ", transform = ::escapeTableCell) + " |")
                     sb.appendLine("| " + List(columnCount) { "---" }.joinToString(" | ") + " |")
                     for (r in rows.drop(1)) {
-                        sb.appendLine("| " + r.joinToString(" | ") + " |")
+                        sb.appendLine("| " + r.joinToString(" | ", transform = ::escapeTableCell) + " |")
                     }
                     sb.appendLine()
                 }
@@ -98,6 +103,30 @@ class MarkdownEngine {
     }
 
     fun roundTrip(markdown: String): String = emit(parse(markdown))
+
+    private fun tableRowCells(row: TableRow): List<String> {
+        val cells = mutableListOf<String>()
+        var cellNode: Node? = row.firstChild
+        while (cellNode != null) {
+            if (cellNode is TableCell) {
+                cells.add(inlineText(cellNode))
+            }
+            cellNode = cellNode.next
+        }
+        return cells
+    }
+
+    private fun escapeTableCell(text: String): String {
+        val sb = StringBuilder(text.length)
+        for (ch in text) {
+            when (ch) {
+                '\\' -> sb.append("\\\\")
+                '|' -> sb.append("\\|")
+                else -> sb.append(ch)
+            }
+        }
+        return sb.toString()
+    }
 
     private fun inlineText(node: Node): String {
         val sb = StringBuilder()
