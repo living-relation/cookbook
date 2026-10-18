@@ -1,0 +1,34 @@
+name: Markdown Android — cloud orchestrator
+
+on:
+  workflow_dispatch:
+
+jobs:
+  orchestrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: scripts/markdown-android-full-auto/pnpm-lock.yaml
+
+      - name: Install orchestrator
+        working-directory: scripts/markdown-android-full-auto
+        run: pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+
+      - name: Run cloud agent pipeline
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TARGET_BRANCH: ${{ github.ref_name }}
+          WORKSPACE_ROOT: ${{ github.workspace }}
+        working-directory: scripts/markdown-android-full-auto
+        run: pnpm orchestrate
