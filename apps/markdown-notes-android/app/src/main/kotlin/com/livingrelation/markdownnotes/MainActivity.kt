@@ -243,6 +243,7 @@ private fun MarkdownViewerApp(initialUri: Uri?) {
                     EditorScreen(
                         document = document,
                         onDocumentChange = viewModel::applyDocument,
+                        onEditTable = { showTableEditor = true },
                     )
                 }
             }

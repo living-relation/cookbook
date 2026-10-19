@@ -37,7 +37,7 @@ class MarkdownNotesUiTest {
     fun bottomNav_switchesEditAndTableThenBackToRead() {
         composeRule.onNodeWithTag("nav-edit").performClick()
         composeRule.onNodeWithTag("editor-screen").assertIsDisplayed()
-        composeRule.onNodeWithTag("editor-mode-edit").assertIsDisplayed()
+        composeRule.onNodeWithTag("toolbar-add-paragraph").assertIsDisplayed()
 
         composeRule.onNodeWithTag("nav-table").performClick()
         composeRule.onNodeWithTag("table-screen").assertIsDisplayed()
@@ -65,10 +65,10 @@ class MarkdownNotesUiTest {
     }
 
     @Test
-    fun editTab_previewToggleShowsRenderedBlocks() {
+    fun viewTab_showsRenderedDocumentAfterEditing() {
         composeRule.onNodeWithTag("nav-edit").performClick()
-        composeRule.onNodeWithTag("editor-mode-preview").performClick()
-        composeRule.onNodeWithTag("editor-preview").assertIsDisplayed()
+        composeRule.onNodeWithTag("editor-screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("nav-read").performClick()
         composeRule.onNodeWithText("Welcome").assertIsDisplayed()
     }
 }

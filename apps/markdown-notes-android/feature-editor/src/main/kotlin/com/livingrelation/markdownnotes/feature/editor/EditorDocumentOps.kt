@@ -8,6 +8,7 @@ enum class InsertableBlockType {
     Heading,
     CodeFence,
     HorizontalRule,
+    Table,
 }
 
 fun Document.updateBlock(index: Int, block: Block): Document {
@@ -27,6 +28,15 @@ fun Document.insertBlockAfter(index: Int?, type: InsertableBlockType): Document 
             InsertableBlockType.Heading -> Block.Heading(level = 1, text = "")
             InsertableBlockType.CodeFence -> Block.CodeFence(language = null, code = "")
             InsertableBlockType.HorizontalRule -> Block.HorizontalRule
+            InsertableBlockType.Table ->
+                Block.Table(
+                    headerRow = true,
+                    rows =
+                        listOf(
+                            listOf("Column 1", "Column 2"),
+                            listOf("", ""),
+                        ),
+                )
         }
     val insertAt =
         when {
