@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.livingrelation.markdownnotes.core.markdown.Block
 import com.livingrelation.markdownnotes.core.markdown.Document
+import com.livingrelation.markdownnotes.feature.reader.MarkdownTable
 
 @Composable
 fun EditorScreen(
@@ -290,9 +291,9 @@ private fun BlockEditorCard(
                 )
             }
             is Block.Table ->
-                Text(
-                    text = "Table (${block.rows.size} rows) — edit on the Table tab.",
-                    style = MaterialTheme.typography.bodyMedium,
+                MarkdownTable(
+                    table = block,
+                    modifier = Modifier.padding(vertical = 4.dp),
                 )
         }
     }
@@ -361,18 +362,10 @@ private fun PreviewBlockView(block: Block, modifier: Modifier = Modifier) {
             )
         Block.HorizontalRule ->
             HorizontalDivider(modifier = modifier.padding(vertical = 12.dp))
-        is Block.Table -> {
-            Column(modifier = modifier.padding(vertical = 8.dp)) {
-                block.rows.forEachIndexed { rowIndex, row ->
-                    val isHeader = block.headerRow && rowIndex == 0
-                    Text(
-                        text = row.joinToString("  ·  "),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier.padding(vertical = 2.dp),
-                    )
-                }
-            }
-        }
+        is Block.Table ->
+            MarkdownTable(
+                table = block,
+                modifier = modifier.padding(vertical = 12.dp),
+            )
     }
 }

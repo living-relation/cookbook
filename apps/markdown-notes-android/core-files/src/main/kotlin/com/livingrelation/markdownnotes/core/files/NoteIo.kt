@@ -19,7 +19,9 @@ object NoteIo {
     fun persistPermissions(context: Context, uri: Uri) {
         val flags =
             Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        context.contentResolver.takePersistableUriPermission(uri, flags)
+        runCatching {
+            context.contentResolver.takePersistableUriPermission(uri, flags)
+        }
     }
 
     suspend fun readText(context: Context, uri: Uri): Result<String> =

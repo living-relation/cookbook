@@ -60,11 +60,6 @@ constructor(
             emptyList(),
         )
 
-    init {
-        viewModelScope.launch {
-            noteSession.pruneRecents()
-        }
-    }
 
     fun clearFileMessage() {
         _fileMessage.value = null

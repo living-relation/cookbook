@@ -1,20 +1,23 @@
 package com.livingrelation.markdownnotes.feature.table
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +26,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -115,11 +119,11 @@ private fun TableEmptyState(onInsertTable: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = "No tables in this note",
+            text = "No tables in this file",
             style = MaterialTheme.typography.titleMedium,
         )
         Text(
-            text = "Insert a GFM table block to edit cells here. Saving uses pipe escaping for cell text.",
+            text = "Insert a table, then tap a cell to type.",
             style = MaterialTheme.typography.bodyMedium,
         )
         AssistChip(
@@ -144,11 +148,11 @@ private fun TableSelectorRow(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        tableIndices.forEach { blockIndex ->
+        tableIndices.forEachIndexed { ordinal, blockIndex ->
             FilterChip(
                 selected = blockIndex == selectedBlockIndex,
                 onClick = { onSelect(blockIndex) },
-                label = { Text("Table block ${blockIndex + 1}") },
+                label = { Text("Table ${ordinal + 1}") },
                 modifier = Modifier.testTag("table-select-$blockIndex"),
             )
         }
@@ -199,51 +203,60 @@ private fun TableGrid(
     onCellChange: (row: Int, column: Int, value: String) -> Unit,
 ) {
     val normalized = table.normalized()
+    val columnCount = normalized.columnCount()
+    val shape = RoundedCornerShape(10.dp)
+    val border = MaterialTheme.colorScheme.outline
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        normalized.rows.forEachIndexed { rowIndex, row ->
-            val isHeader = table.headerRow && rowIndex == 0
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-            ) {
-                row.forEachIndexed { columnIndex, cell ->
-                    OutlinedTextField(
-                        value = cell,
-                        onValueChange = { onCellChange(rowIndex, columnIndex, it) },
-                        modifier =
-                            Modifier
-                                .widthIn(min = 120.dp, max = 200.dp)
-                                .testTag("table-cell-$rowIndex-$columnIndex"),
-                        label = {
-                            Text(
-                                if (isHeader) "H${columnIndex + 1}" else "R${rowIndex + 1}C${columnIndex + 1}",
-                            )
-                        },
-                        textStyle =
-                            MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
-                            ),
-                        singleLine = false,
-                        maxLines = 4,
-                    )
+        Column(
+            modifier =
+                Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .clip(shape)
+                    .border(1.dp, border, shape),
+        ) {
+            normalized.rows.forEachIndexed { rowIndex, row ->
+                val isHeader = table.headerRow && rowIndex == 0
+                Row {
+                    repeat(columnCount) { columnIndex ->
+                        val cell = row.getOrElse(columnIndex) { "" }
+                        BasicTextField(
+                            value = cell,
+                            onValueChange = { onCellChange(rowIndex, columnIndex, it) },
+                            textStyle =
+                                MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                ),
+                            modifier =
+                                Modifier
+                                    .width(148.dp)
+                                    .heightIn(min = 48.dp)
+                                    .background(
+                                        if (isHeader) {
+                                            MaterialTheme.colorScheme.secondaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.surface
+                                        },
+                                    )
+                                    .border(0.5.dp, border.copy(alpha = 0.7f))
+                                    .padding(horizontal = 10.dp, vertical = 12.dp)
+                                    .testTag("table-cell-$rowIndex-$columnIndex"),
+                        )
+                    }
                 }
             }
         }
         Text(
-            text = "Row 1 is the header row when saved to Markdown.",
-            style = MaterialTheme.typography.labelMedium,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-                    .padding(12.dp),
+            text = "First row is the header when saved.",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 12.dp),
         )
     }
 }

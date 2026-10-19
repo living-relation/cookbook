@@ -43,7 +43,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.livingrelation.markdownnotes.core.markdown.Block
 import com.livingrelation.markdownnotes.core.markdown.Document
@@ -210,7 +209,7 @@ private fun BlockView(
     modifier: Modifier = Modifier,
 ) {
     when (block) {
-        is Block.Heading ->
+                is Block.Heading ->
             Text(
                 text = block.text,
                 style =
@@ -221,14 +220,14 @@ private fun BlockView(
                     },
                 modifier =
                     modifier
-                        .padding(vertical = 8.dp)
+                        .padding(top = 20.dp, bottom = 8.dp)
                         .testTag("read-heading-$blockIndex"),
             )
         is Block.Paragraph ->
             Text(
                 text = block.text,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = modifier.padding(vertical = 4.dp),
+                modifier = modifier.padding(vertical = 6.dp),
             )
         is Block.CodeFence ->
             Text(
@@ -246,18 +245,10 @@ private fun BlockView(
             )
         Block.HorizontalRule ->
             HorizontalDivider(modifier = modifier.padding(vertical = 12.dp))
-        is Block.Table -> {
-            Column(modifier = modifier.padding(vertical = 8.dp)) {
-                block.rows.forEachIndexed { index, row ->
-                    val isHeader = block.headerRow && index == 0
-                    Text(
-                        text = row.joinToString("  ·  "),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier.padding(vertical = 2.dp),
-                    )
-                }
-            }
-        }
+        is Block.Table ->
+            MarkdownTable(
+                table = block,
+                modifier = modifier.padding(vertical = 12.dp),
+            )
     }
 }

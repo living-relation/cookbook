@@ -10,17 +10,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
@@ -31,9 +37,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -46,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -60,13 +65,14 @@ import com.livingrelation.markdownnotes.core.files.SafIntents
 import com.livingrelation.markdownnotes.feature.editor.EditorScreen
 import com.livingrelation.markdownnotes.feature.reader.ReadScreen
 import com.livingrelation.markdownnotes.feature.table.TableEditorScreen
+import com.livingrelation.markdownnotes.ui.MarkdownTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(colorScheme = lightColorScheme()) {
+            MarkdownTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     MarkdownViewerApp(initialUri = intent.data)
                 }
@@ -151,26 +157,35 @@ private fun MarkdownViewerApp(initialUri: Uri?) {
             TopAppBar(
                 title = {
                     val title = sessionState.displayName ?: "Markdown"
-                    Text(if (sessionState.isDirty) "$title *" else title)
+                    Text(
+                        text = if (sessionState.isDirty) "$title *" else title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 },
                 actions = {
-                    TextButton(
+                    IconButton(
                         onClick = { showTableEditor = true },
                         modifier = Modifier.testTag("nav-table"),
                     ) {
-                        Text("Tables")
+                        Icon(Icons.Filled.TableChart, contentDescription = "Tables")
                     }
-                    TextButton(
+                    IconButton(
                         onClick = { showRecents = true },
                         modifier = Modifier.testTag("open-recents"),
                     ) {
-                        Text("Recents")
+                        Icon(Icons.Filled.History, contentDescription = "Recents")
                     }
                     Button(
                         onClick = { openFilePicker() },
                         modifier = Modifier.testTag("open-file"),
                     ) {
-                        Text("Open file")
+                        Icon(
+                            Icons.Filled.FolderOpen,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 6.dp),
+                        )
+                        Text("Open")
                     }
                 },
             )
@@ -192,7 +207,17 @@ private fun MarkdownViewerApp(initialUri: Uri?) {
                                 restoreState = true
                             }
                         },
-                        icon = { Text(destination.label.first().toString()) },
+                        icon = {
+                            Icon(
+                                imageVector =
+                                    if (destination == MainDestination.Read) {
+                                        Icons.AutoMirrored.Filled.MenuBook
+                                    } else {
+                                        Icons.Filled.Edit
+                                    },
+                                contentDescription = destination.label,
+                            )
+                        },
                         label = { Text(destination.label) },
                     )
                 }
@@ -212,18 +237,7 @@ private fun MarkdownViewerApp(initialUri: Uri?) {
                 modifier = Modifier.padding(innerPadding),
             ) {
                 composable(MainDestination.Read.route) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        if (sessionState.uri == null) {
-                            OpenFileHero(
-                                onOpenFile = { openFilePicker() },
-                                onRecents = { showRecents = true },
-                            )
-                        }
-                        ReadScreen(
-                            document = document,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+                    ReadScreen(document = document)
                 }
                 composable(MainDestination.Edit.route) {
                     EditorScreen(
@@ -257,42 +271,6 @@ private fun MarkdownViewerApp(initialUri: Uri?) {
                     }
                 },
             )
-        }
-    }
-}
-
-@Composable
-private fun OpenFileHero(
-    onOpenFile: () -> Unit,
-    onRecents: () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .testTag("open-file-hero"),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = "Open a markdown file",
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Text(
-            text = "Tap Open file, then use your phone’s search to find a .md file.",
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Button(
-            onClick = onOpenFile,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .testTag("open-file-hero-button"),
-        ) {
-            Text("Open file")
-        }
-        TextButton(onClick = onRecents, modifier = Modifier.fillMaxWidth()) {
-            Text("Recent files")
         }
     }
 }
