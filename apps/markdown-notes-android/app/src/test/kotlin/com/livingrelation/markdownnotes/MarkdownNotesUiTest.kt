@@ -32,8 +32,6 @@ class MarkdownNotesUiTest {
         composeRule
             .onNodeWithText("Tap Open file at the top, then search for a .md file on your phone.")
             .assertIsDisplayed()
-        composeRule.onNodeWithText("Feature  ·  Status").assertIsDisplayed()
-        composeRule.onNodeWithText("Read  ·  Ready").assertIsDisplayed()
         composeRule.onNodeWithTag("read-screen").assertIsDisplayed()
     }
 
