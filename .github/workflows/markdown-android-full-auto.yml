@@ -36,18 +36,22 @@ jobs:
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Assemble debug APK and run UI checks
+      - name: Assemble debug APK
         working-directory: apps/markdown-notes-android
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
           chmod +x gradlew
-          ./gradlew :app:assembleDebug :app:testDebugUnitTest :core-markdown:testDebugUnitTest :core-files:testDebugUnitTest --no-daemon
+          ./gradlew :app:assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
           name: markdown-notes-debug-apk
           path: apps/markdown-notes-android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Run unit and UI checks
+        working-directory: apps/markdown-notes-android
+        run: ./gradlew :app:testDebugUnitTest :core-markdown:testDebugUnitTest :core-files:testDebugUnitTest --no-daemon
 
       - uses: actions/upload-artifact@v4
         if: always()
