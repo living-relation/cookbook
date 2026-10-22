@@ -11,13 +11,10 @@ import com.livingrelation.markdownnotes.core.files.NoteSession
 import com.livingrelation.markdownnotes.core.files.NoteSessionState
 import com.livingrelation.markdownnotes.core.files.RecentNote
 import com.livingrelation.markdownnotes.core.files.RecentsRepository
-import com.livingrelation.markdownnotes.core.markdown.Document
-import com.livingrelation.markdownnotes.core.markdown.MarkdownEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -25,26 +22,15 @@ class MarkdownNotesViewModel
 @JvmOverloads
 constructor(
     application: Application,
-    private val engine: MarkdownEngine = MarkdownEngine(),
     recentsRepository: RecentsRepository = DataStoreRecentsRepository.create(application),
 ) : AndroidViewModel(application) {
     private val _markdown = MutableStateFlow(loadBundledWelcome(application))
     private val _fileMessage = MutableStateFlow<String?>(null)
 
+    val markdown: StateFlow<String> = _markdown.asStateFlow()
     val fileMessage: StateFlow<String?> = _fileMessage.asStateFlow()
 
-    val document: StateFlow<Document> =
-        _markdown
-            .map(engine::parse)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), engine.parse(_markdown.value))
-
-    private val noteSession =
-        NoteSession(
-            context = application,
-            scope = viewModelScope,
-            contentProvider = { _markdown.value },
-            recentsRepository = recentsRepository,
-        )
+    private val noteSession = NoteSession(application, recentsRepository)
 
     val sessionState: StateFlow<NoteSessionState> =
         noteSession.state.stateIn(
@@ -60,14 +46,13 @@ constructor(
             emptyList(),
         )
 
-
     fun clearFileMessage() {
         _fileMessage.value = null
     }
 
     fun openDocument(uri: Uri) {
         viewModelScope.launch {
-            noteSession.openFromPicker(uri).fold(
+            noteSession.open(uri).fold(
                 onSuccess = { text -> _markdown.value = text },
                 onFailure = { throwable -> _fileMessage.value = describeFileFailure(throwable) },
             )
@@ -87,17 +72,6 @@ constructor(
                 onFailure = { throwable -> _fileMessage.value = describeFileFailure(throwable) },
             )
         }
-    }
-
-    fun onAppStop() {
-        viewModelScope.launch {
-            noteSession.flushAutosave()
-        }
-    }
-
-    fun applyDocument(document: Document) {
-        _markdown.value = engine.emit(document)
-        noteSession.markDirty()
     }
 
     private fun describeFileFailure(throwable: Throwable): String {

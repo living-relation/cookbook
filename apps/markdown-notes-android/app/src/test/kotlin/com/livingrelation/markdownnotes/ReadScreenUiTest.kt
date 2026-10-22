@@ -7,12 +7,11 @@ import androidx.compose.ui.test.assertContentDescriptionContains
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.livingrelation.markdownnotes.core.markdown.MarkdownEngine
+import com.livingrelation.markdownnotes.core.files.NoteIo
 import com.livingrelation.markdownnotes.feature.reader.ReadScreen
 import org.junit.Rule
 import org.junit.Test
@@ -27,23 +26,16 @@ class ReadScreenUiTest {
 
     @Test
     fun pinchZoom_andDoubleTapFitWidthReset() {
-        val document =
-            MarkdownEngine()
-                .parse(
-                    """
-                    # Welcome
-
-                    Pinch to zoom this note.
-                    """
-                        .trimIndent(),
-                )
         composeRule.setContent {
             MaterialTheme {
-                ReadScreen(document = document)
+                ReadScreen(
+                    markdown = "# Welcome\n\nPinch to zoom this note.",
+                    imageBaseUri = NoteIo.BUNDLED_NOTES_BASE_URI,
+                )
             }
         }
 
-        composeRule.onNodeWithText("Welcome").assertIsDisplayed()
+        composeRule.onNodeWithTag("read-screen").assertIsDisplayed()
         composeRule.onNodeWithTag("read-screen").assertContentDescriptionContains("zoom 1.0")
 
         composeRule.onNodeWithTag("read-screen").performTouchInput {

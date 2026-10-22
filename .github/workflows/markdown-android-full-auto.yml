@@ -5,6 +5,11 @@ on:
   push:
     branches:
       - "Living-relation/markdown-android-full-auto-ee3c"
+      - "Living-relation/markdown-android-viewer-ee3c"
+    paths:
+      - "apps/markdown-notes-android/**"
+      - ".github/workflows/markdown-android-full-auto.yml"
+  pull_request:
     paths:
       - "apps/markdown-notes-android/**"
       - ".github/workflows/markdown-android-full-auto.yml"
@@ -51,7 +56,7 @@ jobs:
 
       - name: Run unit and UI checks
         working-directory: apps/markdown-notes-android
-        run: ./gradlew :app:testDebugUnitTest :core-markdown:testDebugUnitTest :core-files:testDebugUnitTest --no-daemon
+        run: ./gradlew :app:testDebugUnitTest :core-markdown:testDebugUnitTest :core-files:testDebugUnitTest :feature-reader:testDebugUnitTest --no-daemon
 
       - uses: actions/upload-artifact@v4
         if: always()

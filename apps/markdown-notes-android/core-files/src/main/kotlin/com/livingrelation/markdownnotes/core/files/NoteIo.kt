@@ -4,24 +4,32 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
+import java.io.File
 import java.io.FileNotFoundException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 object NoteIo {
     private val utf8: Charset = StandardCharsets.UTF_8
-    private val writeMutex = Mutex()
 
-    fun persistPermissions(context: Context, uri: Uri) {
-        val flags =
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+    const val BUNDLED_NOTES_BASE_URI = "file:///android_asset/notes"
+
+    fun persistReadPermission(context: Context, uri: Uri) {
         runCatching {
-            context.contentResolver.takePersistableUriPermission(uri, flags)
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION,
+            )
         }
+    }
+
+    fun imageBaseUri(uri: Uri?): String? {
+        if (uri == null) return BUNDLED_NOTES_BASE_URI
+        if (!uri.scheme.equals("file", ignoreCase = true)) return null
+        val parent = uri.path?.let(::File)?.parentFile ?: return null
+        return Uri.fromFile(parent).toString()
     }
 
     suspend fun readText(context: Context, uri: Uri): Result<String> =
@@ -34,20 +42,6 @@ object NoteIo {
                 Result.success(text)
             } catch (throwable: Throwable) {
                 Result.failure(toFileIoException(throwable))
-            }
-        }
-
-    suspend fun writeText(context: Context, uri: Uri, text: String): Result<Unit> =
-        writeMutex.withLock {
-            withContext(Dispatchers.IO) {
-                try {
-                    context.contentResolver.openOutputStream(uri, "wt")?.use { output ->
-                        output.write(text.toByteArray(utf8))
-                    } ?: return@withContext Result.failure(FileIoException(FileError.NotFound))
-                    Result.success(Unit)
-                } catch (throwable: Throwable) {
-                    Result.failure(toFileIoException(throwable))
-                }
             }
         }
 

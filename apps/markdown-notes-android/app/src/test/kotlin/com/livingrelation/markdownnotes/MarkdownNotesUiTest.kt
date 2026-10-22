@@ -4,8 +4,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextReplacement
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,56 +17,10 @@ class MarkdownNotesUiTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun launch_showsOpenFileControls() {
+    fun launch_showsOpenFileControlsAndReader() {
         composeRule.onNodeWithTag("open-file").assertIsDisplayed()
         composeRule.onNodeWithTag("open-recents").assertIsDisplayed()
-    }
-
-    @Test
-    fun readTab_showsWelcomeHeadingAndTable() {
-        composeRule.onNodeWithText("Welcome").assertIsDisplayed()
-        composeRule
-            .onNodeWithText("Tap Open file at the top, then search for a .md file on your phone.")
-            .assertIsDisplayed()
         composeRule.onNodeWithTag("read-screen").assertIsDisplayed()
-    }
-
-    @Test
-    fun bottomNav_switchesEditAndTableThenBackToRead() {
-        composeRule.onNodeWithTag("nav-edit").performClick()
-        composeRule.onNodeWithTag("editor-screen").assertIsDisplayed()
-        composeRule.onNodeWithTag("toolbar-add-paragraph").assertIsDisplayed()
-
-        composeRule.onNodeWithTag("nav-table").performClick()
-        composeRule.onNodeWithTag("table-screen").assertIsDisplayed()
-        composeRule.onNodeWithTag("table-cell-0-0").assertIsDisplayed()
-        composeRule.onNodeWithText("Feature").assertIsDisplayed()
-
-        composeRule.onNodeWithTag("nav-read").performClick()
-        composeRule.onNodeWithText("Welcome").assertIsDisplayed()
-    }
-
-    @Test
-    fun editTab_changingParagraphMarksDocumentDirtyInTitle() {
-        composeRule.onNodeWithTag("nav-edit").performClick()
-        composeRule.onNodeWithTag("toolbar-add-paragraph").performClick()
-        composeRule.onNodeWithText("Markdown *").assertIsDisplayed()
-    }
-
-    @Test
-    fun tableTab_editingCellMarksDocumentDirtyInTitle() {
-        composeRule.onNodeWithTag("nav-table").performClick()
-        composeRule
-            .onNodeWithTag("table-cell-0-0")
-            .performTextReplacement("Feature updated")
-        composeRule.onNodeWithText("Markdown *").assertIsDisplayed()
-    }
-
-    @Test
-    fun viewTab_showsRenderedDocumentAfterEditing() {
-        composeRule.onNodeWithTag("nav-edit").performClick()
-        composeRule.onNodeWithTag("editor-screen").assertIsDisplayed()
-        composeRule.onNodeWithTag("nav-read").performClick()
-        composeRule.onNodeWithText("Welcome").assertIsDisplayed()
+        composeRule.onNodeWithText("Markdown").assertIsDisplayed()
     }
 }
