@@ -1,0 +1,164 @@
+:root {
+  --ink: #1c1814;
+  --paper: #f3eee4;
+  --moss: #1e5844;
+  --moss-soft: #dce8e1;
+  --rule: #d2c6b6;
+  --wash: #e8dcc8;
+  --muted: #4a433c;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+#content {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 20px 20px 96px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 1.4em 0 0.5em;
+  color: var(--ink);
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.55rem; }
+h3 { font-size: 1.25rem; }
+
+p,
+ul,
+ol,
+blockquote,
+pre,
+table,
+figure,
+.diagram-frame {
+  margin: 0.75em 0;
+}
+
+a {
+  color: var(--moss);
+}
+
+blockquote {
+  border-left: 3px solid var(--moss);
+  margin-left: 0;
+  padding: 0.2em 0 0.2em 1em;
+  color: var(--muted);
+  background: var(--moss-soft);
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background: var(--wash);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--wash);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: #fffdf8;
+}
+
+th,
+td {
+  border: 1px solid var(--rule);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--moss-soft);
+  font-family: system-ui, sans-serif;
+  font-size: 0.92em;
+}
+
+tr:nth-child(even) td {
+  background: rgba(232, 220, 200, 0.35);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+figure.graphic {
+  margin: 1.2em 0;
+  padding: 12px;
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+
+figure.graphic figcaption {
+  margin-top: 8px;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.diagram-frame {
+  padding: 16px;
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  overflow-x: auto;
+}
+
+.diagram-frame .mermaid {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.diagram-error {
+  font-family: system-ui, sans-serif;
+  color: var(--muted);
+  font-size: 0.92em;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 1.6em 0;
+}

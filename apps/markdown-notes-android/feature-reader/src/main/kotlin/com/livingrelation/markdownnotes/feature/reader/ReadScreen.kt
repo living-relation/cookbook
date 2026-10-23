@@ -2,7 +2,6 @@ package com.livingrelation.markdownnotes.feature.reader
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -13,15 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,28 +36,24 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.livingrelation.markdownnotes.core.markdown.Block
-import com.livingrelation.markdownnotes.core.markdown.Document
-import kotlinx.coroutines.launch
+import androidx.compose.ui.viewinterop.AndroidView
+import com.livingrelation.markdownnotes.core.markdown.MarkdownOutline
 
 private const val MIN_ZOOM_SCALE = 0.8f
 private const val MAX_ZOOM_SCALE = 3f
 private const val FIT_WIDTH_SCALE = 1f
 private const val ZOOMED_SCALE_EPSILON = 0.01f
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
-    val toc = remember(document) { document.tableOfContents() }
+fun ReadScreen(
+    markdown: String,
+    imageBaseUri: String,
+    modifier: Modifier = Modifier,
+) {
+    val toc = remember(markdown) { MarkdownOutline.tableOfContents(markdown) }
     var showTocDrawer by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
-    val bringIntoViewRequesters =
-        remember(document) {
-            List(document.blocks.size) { BringIntoViewRequester() }
-        }
+    var webView by remember { mutableStateOf<MarkdownWebView?>(null) }
 
     var scale by remember { mutableFloatStateOf(FIT_WIDTH_SCALE) }
     var offsetX by remember { mutableFloatStateOf(0f) }
@@ -88,10 +78,18 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
             }
         }
 
-    val isZoomedIn = scale > FIT_WIDTH_SCALE + ZOOMED_SCALE_EPSILON
-
     Box(modifier = modifier.fillMaxSize()) {
-        Column(
+        AndroidView(
+            factory = { context ->
+                MarkdownWebView(context).also { created ->
+                    webView = created
+                    created.render(markdown, imageBaseUri, toc)
+                }
+            },
+            update = { view ->
+                webView = view
+                view.render(markdown, imageBaseUri, toc)
+            },
             modifier =
                 Modifier
                     .fillMaxSize()
@@ -104,25 +102,13 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
                         translationY = offsetY
                     }
                     .pointerInput(Unit) {
-                        detectTapGestures(
-                            onDoubleTap = { resetToFitWidth() },
-                        )
+                        detectTapGestures(onDoubleTap = { resetToFitWidth() })
                     }
                     .transformable(
                         state = transformState,
                         lockRotationOnZoomPan = true,
-                    )
-                    .verticalScroll(scrollState, enabled = !isZoomedIn)
-                    .padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 88.dp),
-        ) {
-            document.blocks.forEachIndexed { index, block ->
-                BlockView(
-                    block = block,
-                    blockIndex = index,
-                    modifier = Modifier.bringIntoViewRequester(bringIntoViewRequesters[index]),
-                )
-            }
-        }
+                    ),
+        )
         if (toc.isNotEmpty()) {
             FloatingActionButton(
                 onClick = { showTocDrawer = true },
@@ -172,16 +158,12 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
                         TextButton(
                             onClick = {
                                 showTocDrawer = false
-                                scope.launch {
-                                    bringIntoViewRequesters
-                                        .getOrNull(entry.blockIndex)
-                                        ?.bringIntoView()
-                                }
+                                webView?.scrollToHeading(entry.id)
                             },
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .testTag("read-toc-item-${entry.blockIndex}")
+                                    .testTag("read-toc-item-${entry.id}")
                                     .padding(start = ((entry.level - 1).coerceAtLeast(0) * 16).dp),
                         ) {
                             Text(
@@ -199,56 +181,5 @@ fun ReadScreen(document: Document, modifier: Modifier = Modifier) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun BlockView(
-    block: Block,
-    blockIndex: Int,
-    modifier: Modifier = Modifier,
-) {
-    when (block) {
-                is Block.Heading ->
-            Text(
-                text = block.text,
-                style =
-                    when (block.level) {
-                        1 -> MaterialTheme.typography.headlineLarge
-                        2 -> MaterialTheme.typography.headlineMedium
-                        else -> MaterialTheme.typography.headlineSmall
-                    },
-                modifier =
-                    modifier
-                        .padding(top = 20.dp, bottom = 8.dp)
-                        .testTag("read-heading-$blockIndex"),
-            )
-        is Block.Paragraph ->
-            Text(
-                text = block.text,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = modifier.padding(vertical = 6.dp),
-            )
-        is Block.CodeFence ->
-            Text(
-                text = block.code,
-                style =
-                    MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = FontFamily.Monospace,
-                    ),
-                modifier =
-                    modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(12.dp),
-            )
-        Block.HorizontalRule ->
-            HorizontalDivider(modifier = modifier.padding(vertical = 12.dp))
-        is Block.Table ->
-            MarkdownTable(
-                table = block,
-                modifier = modifier.padding(vertical = 12.dp),
-            )
     }
 }

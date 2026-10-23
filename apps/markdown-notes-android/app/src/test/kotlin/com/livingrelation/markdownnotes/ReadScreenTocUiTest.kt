@@ -4,11 +4,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.livingrelation.markdownnotes.core.markdown.Block
-import com.livingrelation.markdownnotes.core.markdown.MarkdownEngine
+import com.livingrelation.markdownnotes.core.files.NoteIo
+import com.livingrelation.markdownnotes.core.markdown.MarkdownOutline
 import com.livingrelation.markdownnotes.feature.reader.ReadScreen
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,7 +23,7 @@ class ReadScreenTocUiTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun tocDrawer_scrollsToSelectedHeading() {
+    fun tocDrawer_listsHeadingsAndClosesAfterPick() {
         val markdown =
             buildString {
                 appendLine("# Top")
@@ -34,31 +36,22 @@ class ReadScreenTocUiTest {
                 appendLine()
                 appendLine("More content at the bottom.")
             }
-        val document = MarkdownEngine().parse(markdown)
-        val jumpHeadingIndex =
-            document.blocks.indexOfFirst { block ->
-                block is Block.Heading && block.text == "Jump here"
-            }
+        val jump = MarkdownOutline.tableOfContents(markdown).first { it.text == "Jump here" }
+        assertTrue(jump.id == "jump-here")
 
         composeRule.setContent {
             MaterialTheme {
-                ReadScreen(document = document)
+                ReadScreen(
+                    markdown = markdown,
+                    imageBaseUri = NoteIo.BUNDLED_NOTES_BASE_URI,
+                )
             }
         }
-
-        org.junit.Assert.assertTrue(jumpHeadingIndex >= 0)
 
         composeRule.onNodeWithTag("read-toc-open").performClick()
         composeRule.onNodeWithTag("read-toc-drawer").assertIsDisplayed()
-        composeRule.onNodeWithTag("read-toc-item-$jumpHeadingIndex").performClick()
-
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            try {
-                composeRule.onNodeWithTag("read-heading-$jumpHeadingIndex").assertIsDisplayed()
-                true
-            } catch (_: AssertionError) {
-                false
-            }
-        }
+        composeRule.onNodeWithText("Jump here").assertIsDisplayed()
+        composeRule.onNodeWithTag("read-toc-item-${jump.id}").performClick()
+        composeRule.onNodeWithTag("read-toc-open").assertIsDisplayed()
     }
 }

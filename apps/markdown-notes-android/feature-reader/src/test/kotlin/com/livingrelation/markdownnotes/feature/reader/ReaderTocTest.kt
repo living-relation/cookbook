@@ -1,30 +1,32 @@
 package com.livingrelation.markdownnotes.feature.reader
 
-import com.livingrelation.markdownnotes.core.markdown.Block
-import com.livingrelation.markdownnotes.core.markdown.Document
+import com.livingrelation.markdownnotes.core.markdown.MarkdownOutline
+import com.livingrelation.markdownnotes.core.markdown.TocEntry
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ReaderTocTest {
     @Test
-    fun tableOfContents_listsHeadingsWithBlockIndex() {
-        val document =
-            Document(
-                blocks =
-                    listOf(
-                        Block.Heading(1, "Intro"),
-                        Block.Paragraph("Body"),
-                        Block.Heading(2, "Details"),
-                        Block.CodeFence(null, "code"),
-                    ),
-            )
+    fun tableOfContents_listsHeadingsWithStableIds() {
+        val markdown =
+            """
+            # Intro
+
+            Body
+
+            ## Details
+
+            ```
+            # ignored
+            ```
+            """.trimIndent()
 
         assertEquals(
             listOf(
-                TocEntry(0, 1, "Intro"),
-                TocEntry(2, 2, "Details"),
+                TocEntry("intro", 1, "Intro"),
+                TocEntry("details", 2, "Details"),
             ),
-            document.tableOfContents(),
+            MarkdownOutline.tableOfContents(markdown),
         )
     }
 }
